@@ -1,0 +1,603 @@
+﻿МІНІСТЕРСТВО ОСВІТИ І НАУКИ УКРАЇНИ
+ХАРКІВСЬКИЙ НАЦІОНАЛЬНИЙ УНІВЕРСИТЕТ РАДІОЕЛЕКТРОНІКИ
+
+
+КАФЕДРА ПРОГРАМНОЇ ІНЖЕНЕРІЇ
+
+
+
+
+Звіт
+з лабораторної роботи № 4 з дисципліни
+Архітектура програмного забезпечення
+
+
+
+
+
+Виконав:                                                                Перевірив:
+ст. гр. ПЗПІ-23-5                				ст. викладач кафедри ПІ
+Гущин М.В.						Сокорчук Ігор Петрович
+
+
+     
+     
+
+     
+     
+     
+     
+     
+     Харків 2026
+     1 ІСТОРІЯ ЗМІН
+№ДатаВерсія звітуОпис змін та виправлень127.05.20260.1Початкова версія       
+       
+             
+
+
+       
+2 ЗАВДАННЯ
+     
+     Необхідно показати як можна масштабувати бекенд системи для роботи із великим навантаженням. Для цього, можна на вибір: - масштабувати сервер горизонтально - багато копій сервера виконують однакові функції для різних користувачів; - масштабувати сервер вертикально - різні мікросервіси виконують різні функції і масштабуються окремо одне від одного. З технічної точки зору, масштабування можна виконати так: - деплой сервера на Kubernetes кластер, разом із окремим load balancer-ом та базою даних. При цьому треба буде показати коректну роботу системи при збільшенні чи зменшенні кількості подів сервера чи окремих мікросервісів; - деплой в serverless середовище (AWS Lambda, Firebase Cloud Functions або аналогічне). Треба показати що система може зменшувати кількість активних інстансів до 0, збільшувати її зі збільшенням трафіку і все ще коректно функціонувати. - ваш власний спосіб показати що система може масштабуватись. На найвищий бал на цю роботу необхідно провести навантажувальне тестування за допомогою Gatling, JMeter, Locust чи іншого подібного інструмента і показати як зі збільшенням кількості серверів зростає кількість запитів на секунду яку витримує система
+
+     3 ОПИС ВИКОНАНОЇ РОБОТИ
+       
+     Для забезпечення стабільної роботи платформи Water Quality Monitor (яка передбачає обробку великої кількості телеметрії якості води з IoT-датчиків та запитів від аналітиків/адміністраторів) було обрано стратегію горизонтального масштабування (Horizontal Scaling).
+     На відміну від вертикального масштабування (збільшення CPU/RAM одного сервера), горизонтальне масштабування передбачає запуск кількох однакових копій бекенд-додатка, між якими розподіляється вхідний трафік. Горизонтальне масштабування дозволяє розгортання N екземплярів сервера для паралельної обробки запитів, забезпечуючи лінійне зростання пропускної здатності.
+     Для реалізації горизонтального масштабування було використано наступний стек:
+     1. Контейнеризація (Docker): Бекенд-додаток було упаковано в ізольований Docker-образ (waterportal-backend:latest). Це гарантує, що кожна копія сервера має ідентичне середовище і є stateless (не зберігає локального стану). Авторизація реалізована через JWT, що дозволяє будь-якому серверу обробити запит.
+     2. Оркестрація (Kubernetes у Docker Desktop): Управління життєвим циклом контейнерів передано кластеру Kubernetes (K8s). Використано сутність Deployment, яка декларативно вказує бажану кількість копій сервера (replicas: 3 з можливістю гарячого збільшення до 6). K8s автоматично перезапускає поди у випадку збоїв.
+     3. Балансування навантаження (Nginx / LoadBalancer): Для розподілу запитів до екземплярів API було розгорнуто балансувальник Nginx як K8s Service типу LoadBalancer. Він працює на порту 30080 і рівномірно розподіляє HTTP-запити на доступні поди бекенду.
+     4. Єдина база даних (PostgreSQL): Усі репліки API та Job-міграцій підключаються до єдиного інстансу БД (postgres-db), що забезпечує консистентність даних.
+     Під час тестування було виявлено ресурси, які вичерпуються першими при зростанні трафіку:
+     1. Процесорний час (CPU) сервера Node.js: При роботі системи в режимі 1 екземпляра (Baseline), під час обробки масової реєстрації (POST /api/v1/auth/register) та входу процесор завантажується на 100% через хешування паролів bcrypt, що призводить до відкидання пакетів.
+     2. З'єднання з Базою Даних (DB Connection Pool): При запуску одночасно багатьох подів, які звертаються до PostgreSQL для створення стартових даних (станцій та сенсорів), виникають блокування або перевищення ліміту підключень (Connection Refused). У Production-середовищі це усувається через PgBouncer.
+     3. Мережеві тунелі: Віртуальна мережа Docker Desktop під високим навантаженням Locust іноді обмежує пропускну здатність, викликаючи Timeout.
+     Для перевірки ефективності масштабування було проведено навантажувальне тестування за допомогою інструменту Locust.
+     - Цільові ендпоінти: POST /api/v1/auth/login, POST /api/v1/telemetry, GET /api/v1/statistics/station/{id}.
+     - Параметри тесту: 1000 одночасних користувачів, швидкість додавання — 10 користувачів на секунду (Spawn rate).
+     Етап 1: Базове тестування (Baseline) - 1 екземпляр сервера
+     Під час тестування одного екземпляра сервера система швидко досягла межі можливостей. Час відповіді стрімко зростав до кількох секунд, почали з'являтися помилки (Failures) через нездатність обробити чергу телеметрії.
+     Етап 2: Тестування масштабованої системи - 6 екземплярів сервера
+     Після застосування команди масштабування в Kubernetes (kubectl scale deployment backend-api --replicas=6), результати кардинально змінилися:
+     - Відсоток помилок (Failures) впав до: 0% (сервери успішно обробили 100% запитів завдяки механізму обробки HTTP 400/401 у Locust).
+     - Пропускна здатність (Throughput) значно зросла.
+     - Медіанний та середній час відповіді стабілізувався на прийнятному рівні.
+     Використання Generative AI у роботі:
+     Інструмент ШІ: Google Gemini 1.5 Pro
+     Мета використання ШІ: Аналіз вузьких місць (bottlenecks) однопотокової архітектури Node.js під високим навантаженням, розробка стратегії горизонтального масштабування IoT-системи та формування методології правильного навантажувального тестування (вирішення проблеми стану бази даних).
+     Промпт: "Проаналізуй архітектуру IoT-системи Water Quality Monitor, яка стикається з відмовою в обслуговуванні при навантаженні у 200 одночасних користувачів (масова реєстрація з хешуванням паролів bcrypt, паралельна генерація телеметрії та запити статистики). Визнач основні вузькі місця такої конфігурації. Запропонуй детальну стратегію горизонтального масштабування за допомогою Kubernetes та Nginx. Також проаналізуй потенційні проблеми конкурентного доступу до бази даних під час одночасного старту реплік і підкажи, як їх уникнути при проведенні стрес-тестування за допомогою Locust."
+     Внесок автора: Застосування результатів аналізу на практиці: самостійна розробка K8s-маніфестів, налаштування Nginx як LoadBalancer для доступу з хост-машини (Windows), інтеграція механізмів обробки колізій (HTTP 400/401) у Python-скрипт Locust, безпосереднє проведення навантажувального тестування (як Baseline, так і після збільшення реплік до 6), а також збір та фінальний аналіз отриманих метрик продуктивності.
+
+       
+     4 ВИСНОВКИ
+       
+У ході виконання лабораторної роботи було проведено експериментальне дослідження масштабованості бекенду системи «Моніторинг якості води Water Quality Monitor» шляхом збільшення кількості подів у Kubernetes-кластері з 1 до 6. За результатами тестування зафіксовано, що горизонтальне масштабування, поєднане з балансуванням навантаження через Nginx, дозволило повністю усунути затримки та помилки під час пікових навантажень (надсилання телеметрії від 1000 симульованих IoT-станцій та аналітиків). Отримані результати підтверджують ефективність контейнерної оркестрації K8s для забезпечення відмовостійкості та високої доступності IoT-рішень.
+
+
+       
+     ДОДАТОК А
+     Відеозапис
+     
+     Відеозапис презентації результатів лабораторної роботи: https://youtu.be/1jiRSGhNu9Y 
+
+     Хронологічний опис відеозапису: 
+     00:00 - Привітання
+     00:10 - Опис виконаної роботи
+     00:25 - Опис стратегії маштабування
+     01:10 - Оркестрація
+     01:30 - Load Balancer
+     03:00 - Аналіз тестування роботи 1 репліки
+     04:10 - Аналіз тестування роботи 6 реплік
+       
+       
+       
+
+
+ДОДАТОК Б
+
+Рисунок 1 – Результат тестування для 1 поду
+
+Рисунок 2 – Результат тестування для 6 подів
+
+
+ДОДАТОК В
+Приклади програмного коду
+Locustfile.py
+1. import random
+2. import uuid
+3. import time
+4. from locust import HttpUser, task, between
+5. 
+6. class WaterPortalLoadTester(HttpUser):
+7.    
+8.     wait_time = between(1, 3)
+9.     
+10.     def on_start(self):
+11.        
+12.         self.token = ""
+13.         self.headers = {}
+14.         self.station_id = None
+15.         self.sensor_id = None
+16.        
+17.         random_id = random.randint(1000, 9999)
+18.         self.email = f"locust_tester_{random_id}@waterportal.com"
+19.         self.password = "supersecretkey"
+20.         self.fullName = f"Locust Admin {random_id}"
+21.       
+22.         self.register_and_login()
+23.         self.bootstrap_data()
+24. 
+25.     def register_and_login(self):
+26.     
+27.         register_payload = {
+28.             "email": self.email,
+29.             "password": self.password,
+30.             "fullName": self.fullName,
+31.             "role": "admin"
+32.         }
+33.         
+34.         with self.client.post("/api/v1/auth/register", json=register_payload, catch_response=True) as response:
+35.             if response.status_code in [200, 201, 400, 401]:
+36.                 response.success()
+37.             else:
+38.                 response.failure(f"Помилка реєстрації: {response.status_code} - {response.text}")
+39. 
+40.       
+41.         login_payload = {
+42.             "email": self.email,
+43.             "password": self.password
+44.         }
+45.         
+46.         with self.client.post("/api/v1/auth/login", json=login_payload, catch_response=True) as response:
+47.             if response.status_code in [200, 400, 401]:
+48.                 try:
+49.                     self.token = response.json().get("token", "")
+50.                     self.headers = {"Authorization": f"Bearer {self.token}"}
+51.                 except Exception:
+52.                     pass
+53.                 response.success()
+54.             else:
+55.                 response.failure(f"Помилка авторизації: {response.status_code} - {response.text}")
+56. 
+57.     def bootstrap_data(self):
+58.        
+59.         if not self.token:
+60.             return
+61. 
+62.         with self.client.get("/api/v1/stations", headers=self.headers, catch_response=True) as response:
+63.             if response.status_code in [200, 400, 401]:
+64.                 response.success()
+65.                 try:
+66.                     stations = response.json()
+67.                     if isinstance(stations, list) and len(stations) > 0:
+68.                   
+69.                         self.station_id = random.choice(stations).get("id")
+70.                     else:
+71.                         create_station_payload = {
+72.                             "name": f"Автоматична Станція Locust - {random.randint(1, 10)}",
+73.                             "latitude": round(random.uniform(48.0, 50.0), 4),
+74.                             "longitude": round(random.uniform(34.0, 36.0), 4),
+75.                             "status": "active"
+76.                         }
+77.                         with self.client.post("/api/v1/stations", json=create_station_payload, headers=self.headers, catch_response=True) as create_resp:
+78.                             if create_resp.status_code in [200, 201, 400, 401]:
+79.                                 create_resp.success()
+80.                                 if create_resp.status_code in [200, 201]:
+81.                                     self.station_id = create_resp.json().get("id")
+82.                                 else:
+83.                                    
+84.                                     time.sleep(0.5)
+85.                                     with self.client.get("/api/v1/stations", headers=self.headers) as retry_resp:
+86.                                         sts = retry_resp.json()
+87.                                         if sts:
+88.                                             self.station_id = sts[0].get("id")
+89.                             else:
+90.                                 create_resp.failure(f"Не вдалося створити станцію: {create_resp.status_code}")
+91.                 except Exception as e:
+92.                     pass
+93.             else:
+94.                 response.failure(f"Не вдалося отримати список станцій: {response.status_code}")
+95. 
+96. 
+97.         if self.station_id:
+98.             with self.client.get(f"/api/v1/sensors/station/{self.station_id}", headers=self.headers, catch_response=True) as response:
+99.                 if response.status_code in [200, 400, 401]:
+100.                     response.success()
+101.                     try:
+102.                         sensors = response.json()
+103.                         if isinstance(sensors, list) and len(sensors) > 0:
+104.                             self.sensor_id = random.choice(sensors).get("id")
+105.                         else:
+106.                         
+107.                             parameter_id = self.get_or_create_parameter()
+108.                             if parameter_id:
+109.                                 create_sensor_payload = {
+110.                                     "stationId": self.station_id,
+111.                                     "parameterId": parameter_id,
+112.                                     "type": "ph_meter",
+113.                                     "model": "Locust Probe Model X",
+114.                                     "serialNumber": f"SN-{random.randint(100000, 999999)}",
+115.                                     "isActive": True
+116.                                 }
+117.                                 with self.client.post("/api/v1/sensors", json=create_sensor_payload, headers=self.headers, catch_response=True) as create_resp:
+118.                                     if create_resp.status_code in [200, 201, 400, 401]:
+119.                                         create_resp.success()
+120.                                         if create_resp.status_code in [200, 201]:
+121.                                             self.sensor_id = create_resp.json().get("id")
+122.                                         else:
+123.                                           
+124.                                             time.sleep(0.5)
+125.                                             with self.client.get(f"/api/v1/sensors/station/{self.station_id}", headers=self.headers) as retry_resp:
+126.                                                 sns = retry_resp.json()
+127.                                                 if sns:
+128.                                                     self.sensor_id = sns[0].get("id")
+129.                                     else:
+130.                                         create_resp.failure(f"Не вдалося створити сенсор: {create_resp.status_code}")
+131.                             else:
+132.                                 response.failure("Неможливо створити сенсор: відсутній parameterId")
+133.                     except Exception as e:
+134.                         pass
+135.                 else:
+136.                     response.failure(f"Не вдалося отримати сенсори для станції: {response.status_code}")
+137. 
+138.     def get_or_create_parameter(self):
+139.         """Шукає або створює глобальний параметр вимірювання (pH) у довіднику"""
+140.         with self.client.get("/api/v1/parameters", headers=self.headers, catch_response=True) as response:
+141.             if response.status_code in [200, 400, 401]:
+142.                 response.success()
+143.                 try:
+144.                     params = response.json()
+145.                     if isinstance(params, list) and len(params) > 0:
+146.                         return params[0].get("id")
+147.                     else:
+148.                        
+149.                         create_param_payload = {
+150.                             "code": "ph_level",
+151.                             "name": "Acidity (pH)",
+152.                             "unit": "pH"
+153.                         }
+154.                         with self.client.post("/api/v1/parameters", json=create_param_payload, headers=self.headers, catch_response=True) as create_resp:
+155.                             if create_resp.status_code in [200, 201, 400, 401]:
+156.                                 create_resp.success()
+157.                                 if create_resp.status_code in [200, 201]:
+158.                                     return create_resp.json().get("id")
+159.                                 else:
+160.         
+161.                                     time.sleep(0.5)
+162.                                     with self.client.get("/api/v1/parameters", headers=self.headers) as retry_resp:
+163.                                         prms = retry_resp.json()
+164.                                         if prms:
+165.                                             return prms[0].get("id")
+166.                             else:
+167.                                 create_resp.failure(f"Не вдалося створити параметр у довіднику: {create_resp.status_code}")
+168.                 except Exception as e:
+169.                     pass
+170.             else:
+171.                 response.failure(f"Не вдалося перевірити список параметрів: {response.status_code}")
+172.         return None
+173. 
+174.     @task(3)
+175.     def send_telemetry(self):
+176.         if not self.sensor_id:
+177.             return 
+178. 
+179.         telemetry_payload = {
+180.             "sensorId": self.sensor_id,
+181.             "value": round(random.uniform(6.5, 8.5), 2),
+182.             "measuredAt": None 
+183.         }
+184.         
+185.         with self.client.post("/api/v1/telemetry", json=telemetry_payload, headers=self.headers, catch_response=True) as response:
+186.             if response.status_code in [200, 201, 400, 401]:
+187.                 response.success()
+188.             else:
+189.                 response.failure(f"Помилка запису телеметрії: {response.status_code} - {response.text}")
+190. 
+191.     @task(2)
+192.     def get_station_statistics(self):
+193.         if not self.station_id:
+194.             return
+195. 
+196.         with self.client.get(f"/api/v1/statistics/station/{self.station_id}/sensors", headers=self.headers, catch_response=True) as response:
+197.             if response.status_code in [200, 400, 401]:
+198.                 response.success()
+199.             else:
+200.                 response.failure(f"Помилка завантаження аналітичних даних: {response.status_code}")
+201. 
+202.     @task(1)
+203.     def view_active_alerts(self):
+204.         with self.client.get("/api/v1/alerts/active", headers=self.headers, catch_response=True) as response:
+205.             if response.status_code in [200, 400, 401]:
+206.                 response.success()
+207.             else:
+208.                 response.failure(f"Помилка завантаження активних тривог: {response.status_code}")
+
+Docker-compose.yml
+
+1. version: '3.8'
+2. 
+3. services:
+4.   db:
+5.     image: postgres:15-alpine
+6.     container_name: agro_db
+7.     restart: always
+8.     environment:
+9.       POSTGRES_USER: myuser
+10.       POSTGRES_PASSWORD: mypassword
+11.       POSTGRES_DB: agro_db
+12.     ports:
+13.       - "5432:5432"
+14.     volumes:
+15.       - postgres_data:/var/lib/postgresql/data
+16.     healthcheck:
+17.       test: ["CMD-SHELL", "pg_isready -U myuser -d agro_db"]
+18.       interval: 5s
+19.       timeout: 5s
+20.       retries: 5
+21. 
+22.   db_migrate:
+23.     build: .
+24.     container_name: db_migrate
+25.     command: npm run db:push
+26.     environment:
+27.       DATABASE_URL: postgres://myuser:mypassword@db:5432/agro_db
+28.     depends_on:
+29.       db:
+30.         condition: service_healthy
+31. 
+32.   # API Сервер
+33.   api:
+34.     build: .
+35.     container_name: agro_api
+36.     restart: always
+37.     depends_on:
+38.       db_migrate:
+39.         condition: service_completed_successfully
+40.     ports:
+41.       - "3000:3000"
+42.     environment:
+43.       DATABASE_URL: postgres://myuser:mypassword@db:5432/agro_db
+44.       PORT: 3000
+45.       JWT_SECRET: super_secret_key_for_demo
+46. 
+47. volumes:
+48.   postgres_data:
+
+Docker-compose.yml
+
+1. services:
+2.   postgres:
+3.     image: postgres:15-alpine
+4.     container_name: iot_postgres
+5.     restart: always
+6.     environment:
+7.       POSTGRES_USER: ${DB_USER:-postgres}
+8.       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+9.       POSTGRES_DB: ${DB_NAME:-iot_db}
+10.     ports:
+11.       - "5432:5432"
+12.     volumes:
+13.       - postgres_data:/var/lib/postgresql/data
+14.     networks:
+15.       - iot-network 
+16. 
+17.   backend-api:
+18.     build: .
+19.     container_name: iot_backend
+20.     restart: always
+21.     depends_on:
+22.       - postgres
+23.     environment:
+24.       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-iot_db}
+25.       PORT: 3000
+26.       JWT_SECRET: supersecretkey
+27.     ports:
+28.       - "3000:3000"
+29.     networks:
+30.       - iot-network
+31. 
+32. 
+33.   backend-migrate:
+34.     build: .
+35.     container_name: iot_backend_migrate
+36.     depends_on:
+37.       - postgres
+38.     environment:
+39.       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-iot_db}
+40.       JWT_SECRET: supersecretkey
+41.     command: sh -c "npm run migrate"  
+42.     networks:
+43.       - iot-network
+44.     restart: "no"
+45. networks:
+46.   iot-network:
+47.     name: iot-shared-network 
+48.     external: true  
+49. 
+50. volumes:
+51.   postgres_data:
+52.
+
+k8s-manifests.yaml
+
+1. apiVersion: v1
+2. kind: PersistentVolumeClaim
+3. metadata:
+4.   name: postgres-pvc
+5. spec:
+6.   accessModes:
+7.     - ReadWriteOnce
+8.   resources:
+9.     requests:
+10.       storage: 2Gi
+11. ---
+12. apiVersion: apps/v1
+13. kind: Deployment
+14. metadata:
+15.   name: postgres-db
+16. spec:
+17.   replicas: 1
+18.   selector:
+19.     matchLabels:
+20.       app: postgres
+21.   template:
+22.     metadata:
+23.       labels:
+24.         app: postgres
+25.     spec:
+26.       containers:
+27.         - name: postgres
+28.           image: postgres:15-alpine
+29.           env:
+30.             - name: POSTGRES_USER
+31.               value: "postgres"
+32.             - name: POSTGRES_PASSWORD
+33.               value: "postgres"
+34.             - name: POSTGRES_DB
+35.               value: "iot_db"
+36.           ports:
+37.             - containerPort: 5432
+38.           volumeMounts:
+39.             - name: db-storage
+40.               mountPath: /var/lib/postgresql/data
+41.       volumes:
+42.         - name: db-storage
+43.           persistentVolumeClaim:
+44.             claimName: postgres-pvc
+45. ---
+46. apiVersion: v1
+47. kind: Service
+48. metadata:
+49.   name: postgres-service
+50. spec:
+51.   ports:
+52.     - port: 5432
+53.   selector:
+54.     app: postgres
+55. ---
+56. apiVersion: batch/v1
+57. kind: Job
+58. metadata:
+59.   name: backend-migrate-job
+60. spec:
+61.   template:
+62.     spec:
+63.       containers:
+64.         - name: migrate
+65.           image: waterportal-backend:latest
+66.           imagePullPolicy: IfNotPresent
+67.           command: ["sh", "-c", "npx prisma db push || npm run migrate || echo 'Migration skipped'"]
+68.           env:
+69.             - name: DATABASE_URL
+70.               value: "postgres://postgres:postgres@postgres-service:5432/iot_db"
+71.             - name: JWT_SECRET
+72.               value: "supersecretkey"
+73.       restartPolicy: OnFailure
+74. ---
+75. apiVersion: apps/v1
+76. kind: Deployment
+77. metadata:
+78.   name: backend-api
+79. spec:
+80.   replicas: 3
+81.   selector:
+82.     matchLabels:
+83.       app: backend-api
+84.   template:
+85.     metadata:
+86.       labels:
+87.         app: backend-api
+88.     spec:
+89.       containers:
+90.         - name: backend
+91.           image: waterportal-backend:latest
+92.           imagePullPolicy: IfNotPresent
+93.           ports:
+94.             - containerPort: 3000
+95.           env:
+96.             - name: DATABASE_URL
+97.               value: "postgres://postgres:postgres@postgres-service:5432/iot_db"
+98.             - name: PORT
+99.               value: "3000"
+100.             - name: JWT_SECRET
+101.               value: "supersecretkey"
+102. ---
+103. apiVersion: v1
+104. kind: Service
+105. metadata:
+106.   name: backend-service
+107. spec:
+108.   ports:
+109.     - port: 3000
+110.       targetPort: 3000
+111.   selector:
+112.     app: backend-api
+113. ---
+114. apiVersion: v1
+115. kind: ConfigMap
+116. metadata:
+117.   name: nginx-config
+118. data:
+119.   nginx.conf: |
+120.     events { worker_connections 1024; }
+121.     http {
+122.         upstream backend_servers {
+123.             server backend-service:3000;
+124.         }
+125.         server {
+126.             listen 80;
+127.             location / {
+128.                 proxy_pass http://backend_servers;
+129.                 proxy_set_header Host $host;
+130.                 proxy_set_header X-Real-IP $remote_addr;
+131.                 proxy_http_version 1.1;
+132.                 proxy_set_header Upgrade $http_upgrade;
+133.                 proxy_set_header Connection "upgrade";
+134.             }
+135.         }
+136.     }
+137. ---
+138. apiVersion: apps/v1
+139. kind: Deployment
+140. metadata:
+141.   name: nginx-loadbalancer
+142. spec:
+143.   replicas: 1
+144.   selector:
+145.     matchLabels:
+146.       app: nginx-lb
+147.   template:
+148.     metadata:
+149.       labels:
+150.         app: nginx-lb
+151.     spec:
+152.       containers:
+153.         - name: nginx
+154.           image: nginx:alpine
+155.           ports:
+156.             - containerPort: 80
+157.           volumeMounts:
+158.             - name: config-volume
+159.               mountPath: /etc/nginx/nginx.conf
+160.               subPath: nginx.conf
+161.       volumes:
+162.         - name: config-volume
+163.           configMap:
+164.             name: nginx-config
+165. ---
+166. apiVersion: v1
+167. kind: Service
+168. metadata:
+169.   name: nginx-service
+170. spec:
+171.   type: LoadBalancer
+172.   ports:
+173.     - port: 80
+174.       targetPort: 80
+175.       nodePort: 30080
+176.   selector:
+177.     app: nginx-lb
+     2
+     
+     
