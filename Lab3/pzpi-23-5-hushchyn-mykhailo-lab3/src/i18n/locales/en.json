@@ -1,0 +1,457 @@
+{
+  "auth": {
+    "loginTitle": "Log In",
+    "loginSubtitle": "Enter your credentials to access",
+    "registerTitle": "Create an Account",
+    "registerSubtitle": "Fill out the form below to access the system (Viewer)",
+    "fullName": "Full Name",
+    "email": "Email",
+    "password": "Password",
+    "loginButton": "Log In",
+    "registerButton": "Register",
+    "loggingIn": "Logging in...",
+    "registering": "Registering...",
+    "unauthorized": "You do not have access to this page.",
+    "noAccount": "Don't have an account? Create a new one",
+    "alreadyHaveAccount": "Already have an account? Log in",
+    "errors": {
+      "invalidEmail": "Invalid email format",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "invalidCredentials": "Invalid email or password.",
+      "networkError": "Connection error. Please check if the backend is running.",
+      "nameTooShort": "Enter a name (minimum 2 characters)",
+      "registrationFailed": "Registration failed. The email might already be taken."
+    },
+    "placeholders": {
+      "email": "name@example.com",
+      "password": "••••••••",
+      "fullName": "John Doe",
+      "passwordMin": "Minimum 6 characters"
+    },
+    "success": {
+      "registered": "Registration successful! Redirecting to login page..."
+    }
+  },
+  "nav": {
+    "dashboard": "My Stations",
+    "alerts": "Alerts",
+    "profile": "My Profile",
+    "stations": "Stations",
+    "statistics": "Analytics",
+    "users": "Users",
+    "backups": "Backups",
+    "settings": "Settings",
+    "logout": "Log Out"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "manager": "Manager",
+    "technician": "Technician",
+    "analyst": "Analyst",
+    "viewer": "Viewer",
+    "unknown": "Unknown",
+    "all": "All",
+    "admins": "Admins",
+    "managers": "Managers",
+    "technicians": "Technicians",
+    "analysts": "Analysts",
+    "viewers": "Viewers",
+    "adminDesc": "Administrator (Full access)",
+    "managerDesc": "Manager (Station management)",
+    "technicianDesc": "Technician (Equipment control)",
+    "analystDesc": "Analyst (Statistics and reports)",
+    "viewerDesc": "Viewer (Data view only)"
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "logged_in_as": "Logged in as",
+    "activeStations": "Active Stations",
+    "systemStatus": "System Status",
+    "latestAlerts": "Latest Alerts",
+    "noData": "No data available",
+    "adminPanel": "Admin Panel",
+    "management": "Management",
+    "adminPanelFallback": "Admin Panel",
+    "mainMenu": "Main Menu",
+    "guest": "Guest"
+  },
+  "stations": {
+    "status": {
+      "active": "Active",
+      "offline": "Offline",
+      "maintenance": "Maintenance"
+    },
+    "subtitle": "Overview and management of IoT stations",
+    "create": "Create Station",
+    "searchPlaceholder": "Search by station name...",
+    "notFound": "No stations found",
+    "notFoundDesc": "Change filters or create a new station.",
+    "goToDashboard": "Go to Dashboard",
+    "editStation": "Edit Station",
+    "createStation": "New Station",
+    "deleteConfirmTitle": "Delete station?",
+    "saveError": "Error saving station",
+    "deleteError": "Error deleting station",
+    "form": {
+      "name": "Station Name",
+      "namePlaceholder": "e.g. Pump Station #1",
+      "latitude": "Latitude (Lat)",
+      "longitude": "Longitude (Lng)"
+    },
+    "errors": {
+      "nameMinLength": "Minimum 3 characters"
+    }
+  },
+  "stats": {
+    "title": "Analytics & Reports",
+    "subtitle": "Aggregated sensor and controller data",
+    "pageTitle": "Station Analytics",
+    "periods": {
+      "24h": "24h",
+      "7d": "7 days",
+      "30d": "30 days",
+      "all": "All time",
+      "custom": "Custom range"
+    },
+    "refresh": "Refresh",
+    "selectStation": {
+      "title": "Select a station",
+      "desc": "Please select a station from the list to view its analytics."
+    },
+    "errors": {
+      "fetchFailed": "Failed to load statistics. Check your connection."
+    },
+    "noAccess": {
+      "title": "Access Denied",
+      "desc": "Your role does not allow viewing analytics."
+    },
+    "sensors": {
+      "title": "Aggregated Sensor Metrics",
+      "titleMinMaxAvg": "Sensor Metrics (Min/Max/Avg)",
+      "noData": "No telemetry data available for the selected period.",
+      "defaultType": "Sensor",
+      "defaultParam": "Unknown parameter",
+      "avg": "Average",
+      "min": "Minimum",
+      "max": "Maximum",
+      "minShort": "Min",
+      "maxShort": "Max"
+    },
+    "controllers": {
+      "title": "Controller Loads (Actuators)",
+      "avgLoadTitle": "Average Equipment Load",
+      "noData": "No controller operational data available for the selected period.",
+      "maxShort": "Max",
+      "logs": "Logs"
+    },
+    "table": {
+      "equipment": "Equipment",
+      "avgLoad": "Avg. Load",
+      "maxLoad": "Peak Load",
+      "logsCount": "Log Count"
+    },
+    "alarms": {
+      "summaryTitle": "Alarms Summary",
+      "perfectNoAlarms": "Perfect! No alarms detected."
+    }
+  },
+  "alarms": {
+    "loadError": "Failed to load alerts. Check your connection.",
+    "resolveError": "Error while resolving alert",
+    "deleteError": "Error while deleting alert",
+    "subtitle": "Monitoring critical events and warnings",
+    "criticalCount": "critical",
+    "allTypes": "All events",
+    "critical": "Critical",
+    "warning": "Warning",
+    "emptyTitle": "All quiet",
+    "emptyDesc": "No active alerts found.",
+    "resolveBtn": "Resolve",
+    "deleteConfirm": "Delete alert?",
+    "deleteDesc": "This action cannot be undone. The alert record will be deleted from the database.",
+    "unknownStation": "Unknown station",
+    "station": "Station",
+    "target": "Target"
+  },
+  "common": {
+    "minsAgo": "mins ago",
+    "hoursAgo": "hours ago",
+    "daysAgo": "days ago",
+    "justNow": "Just now",
+    "refresh": "Refresh",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "back": "Go Back",
+    "edit": "Edit",
+    "save": "Save",
+    "saving": "Saving...",
+    "create": "Create",
+    "update": "Update",
+    "success": "Success",
+    "warning": "Warning",
+    "actions": "Actions",
+    "unknown": "Unknown",
+    "parameter": "Parameter",
+    "parameterLower": "parameter",
+    "type": "Type",
+    "model": "Model",
+    "serialNumber": "Serial Number",
+    "minimum": "Minimum",
+    "maximum": "Maximum",
+    "time": "Time",
+    "value": "Value",
+    "status": "Status",
+    "active": "ACTIVE",
+    "offline": "OFFLINE",
+    "history": "History",
+    "loading": "Loading...",
+    "noData": "No data to display",
+    "analytics": "Analytics",
+    "assign": "Assign",
+    "select": "Select...",
+    "all": "All",
+    "deleteConfirmText": "You are about to delete",
+    "cannotUndo": "This action cannot be undone.",
+    "user": "User",
+    "you": "You",
+    "email": "Email",
+    "fullName": "Full Name",
+    "station": "Station",
+    "role": "Role"
+  },
+  "backups": {
+    "header": {
+      "title": "Backups",
+      "subtitle": "Create database backups and restore the system"
+    },
+    "accessDenied": {
+      "title": "Access Denied",
+      "message": "Backup management is only available to administrators."
+    },
+    "export": {
+      "title": "Create Backup",
+      "description": "Download a SQL dump of the database to your device for safe storage.",
+      "full": {
+        "title": "Full Backup (FULL)",
+        "subtitle": "Structure, users, stations, and telemetry"
+      },
+      "telemetry": {
+        "title": "Telemetry Only",
+        "subtitle": "Export archive of sensor metric logs"
+      }
+    },
+    "import": {
+      "title": "System Recovery",
+      "description": "Upload a .sql file to restore the database to a previous state.",
+      "warning": "Caution! This action will delete all current tables and replace them with data from the uploaded file.",
+      "selectFile": "Select .sql file",
+      "button": "Start Recovery",
+      "processing": "Restoring..."
+    },
+    "restoreConfirm": "WARNING! DATABASE RESTORE.\n\nThis action will delete ALL current data in the system and replace it with data from the file. This process cannot be undone.\n\nAre you sure you want to proceed?",
+    "messages": {
+      "downloadSuccess": "Backup ({{type}}) downloaded successfully.",
+      "downloadError": "Error creating backup. Please try again later.",
+      "noFileSelected": "Please select a .sql file to restore.",
+      "restoreSuccess": "System restored successfully from backup.",
+      "restoreError": "Error restoring database. Check the file format."
+    }
+  },
+  "profile": {
+    "title": "Profile Settings",
+    "subtitle": "Manage your personal data and system preferences",
+    "loading": "Loading profile...",
+    "errors": {
+      "fetchFailed": "Failed to load profile data. Check your connection.",
+      "updateFailed": "Failed to update profile.",
+      "passwordsMismatch": "Passwords do not match!",
+      "passwordChangeFailed": "Failed to change password."
+    },
+    "success": {
+      "profileUpdated": "Personal data successfully updated!",
+      "passwordChanged": "Your password has been successfully changed!"
+    },
+    "personalData": {
+      "title": "Personal Data",
+      "fullName": "Full Name",
+      "email": "Email Address",
+      "saveChanges": "Save Changes",
+      "notSpecified": "Not specified",
+      "verified": "Verified",
+      "accessLevel": "Access Level (Role)"
+    },
+    "interface": {
+      "title": "Interface",
+      "language": "System Language",
+      "langUk": "🇺🇦 Ukrainian",
+      "langEn": "🇬🇧 English"
+    },
+    "security": {
+      "title": "Security",
+      "newPassword": "New Password",
+      "minChars": "Minimum 6 characters",
+      "confirmPassword": "Confirm Password",
+      "repeatPassword": "Repeat new password",
+      "prompt": "Would you like to update your account login password?",
+      "changePassword": "Change Password"
+    },
+    "logout": {
+      "title": "Log Out",
+      "description": "You are about to end your current session.",
+      "button": "Log Out of Account"
+    }
+  },
+  "users": {
+    "subtitle": "Access and personnel role management",
+    "create": "Create User",
+    "searchPlaceholder": "Search by name or email...",
+    "notFound": "No users found",
+    "notFoundDesc": "Try changing search criteria or filters.",
+    "registeredAt": "Registration Date",
+    "blocked": "Blocked",
+    "assignToStation": "Assign to Station",
+    "cannotDeleteSelf": "Cannot delete your own account",
+    "editUser": "Edit User",
+    "newUser": "New User",
+    "tempPassword": "Temporary Password",
+    "allowLogin": "Account is active (allow login)",
+    "assignTitle": "Assign to Station",
+    "assignDesc": "Select a station to grant access to",
+    "selectStation": "Select a station...",
+    "assignBtn": "Assign",
+    "deleteConfirmTitle": "Delete account?",
+    "deleteConfirmDesc": "You are about to delete user",
+    "assignSuccess": "User successfully assigned to the station!",
+    "assignError": "Assignment error. The user might already be assigned.",
+    "errors": {
+      "fetchFailed": "Failed to load users",
+      "createFailed": "Failed to create user",
+      "updateFailed": "Failed to update user",
+      "deleteFailed": "Failed to delete user"
+    },
+    "placeholders": {
+      "fullName": "John Doe"
+    }
+  },
+  "equipment": {
+    "types": {
+      "pump": "Pump",
+      "aerator": "Aerator",
+      "filter": "Filter",
+      "valve": "Valve",
+      "dispenser_chlorine": "Chlorine Dispenser",
+      "dispenser_acid": "Acid Dispenser",
+      "dispenser_alkali": "Alkali Dispenser",
+      "sensor": "Sensor"
+    }
+  },
+  "stationDetails": {
+    "errorLoading": "Failed to load data. Please check your connection to the server.",
+    "untitled": "Untitled",
+    "telemetry": "Telemetry",
+    "addSensor": "Add Sensor",
+    "noSensors": "No sensors connected",
+    "setActive": "Device is Active",
+    "saveError": "Error while saving",
+    "createError": "Error while creating",
+    "deleteError": "Error while deleting",
+    "historyOf": "History of",
+    "historyData": "metrics",
+    "historyStates": "states",
+    "assignUser": "Assign User",
+    "assignUserModal": "Assign User to Station",
+    "selectEmployee": "Select an employee",
+    "assignUserDesc": "Only users not yet assigned to this station are displayed.",
+    "assignError": "Assignment failed. The user might already be assigned.",
+    "unassignConfirm": "Unassign this user from the station?",
+    "unassignError": "Unassign failed.",
+    "errorLoadingUsersLog": "Failed to load all users",
+    "power": "Power",
+    "assignedStaff": "Assigned Staff",
+    "assignedStaffDesc": "Users who have access to this station",
+    "noAssignedUsers": "No staff assigned to this station yet.",
+    "unassignUser": "Unassign from station",
+    "sensorTypePlaceholder": "ph_meter, thermometer...",
+    "addThresholdModal": "Add Alert Threshold",
+    "editThresholdModal": "Edit Thresholds",
+    "selectParameter": "Select a parameter...",
+    "warningLevel": "Warning Level",
+    "criticalLevel": "Critical Level",
+    "criticalMin": "Critical Minimum",
+    "criticalMax": "Critical Maximum",
+    "saveThresholds": "Save Thresholds",
+    "addActuatorFull": "Add Controller",
+    "examplePump": "e.g. Main Pump",
+    "turnOnImmediately": "Turn on immediately",
+    "deleteObject": "Delete object?",
+    "deleteConfirmPrefix": "You are about to delete ",
+    "deleteConfirmSuffix": ". This action cannot be undone.",
+    "thresholds": "Alerts (Thresholds)",
+    "addThreshold": "Add Threshold",
+    "noThresholds": "No threshold values configured",
+    "warningMinMax": "Warning (Min/Max)",
+    "criticalMinMax": "Critical (Min/Max)",
+    "thresholdsFor": "Thresholds for",
+    "actuators": "Controls",
+    "addActuator": "Add Actuator",
+    "noActuators": "No controllers found"
+  },
+  "userAlarms": {
+    "title": "My Alarms",
+    "subtitle": "Alerts and events from stations you are subscribed to",
+    "fetchError": "Failed to load your alerts. Please try refreshing the page.",
+    "unknownStation": "Unknown station",
+    "noSubscriptions": "No Subscriptions",
+    "noSubscriptionsDesc": "You are not subscribed to any stations yet, so there are no alerts.",
+    "goToMap": "Go to Station Map",
+    "allQuietDesc": "There are no active alerts on the stations you are subscribed to.",
+    "stationDetails": "Station Details"
+  },
+  "userStation": {
+    "unsubSuccess": "Successfully unsubscribed from notifications.",
+    "subSuccess": "Successfully subscribed! You will now receive notifications.",
+    "subError": "Error changing subscription status. Try again later.",
+    "subscribed": "Subscribed",
+    "subscribe": "Subscribe to notifications",
+    "wqiTitle": "Water Quality Index",
+    "wqiUnavailable": "WQI Unavailable",
+    "wqiNoData": "Not enough data for calculation.",
+    "noTelemetry": "Sensors are not transmitting data",
+    "noTelemetryDesc": "The station is currently not sending any telemetry metrics.",
+    "noNorm": "Norm not set",
+    "statusNormal": "Normal",
+    "normPrefix": "Norm: ",
+    "recentEvents": "Recent Events & Alarms",
+    "noEvents": "No events recorded",
+    "noEventsDesc": "All metrics are within normal limits."
+  },
+  "userStations": {
+    "mapLegend": "Map Legend",
+    "activeStation": "Active Station",
+    "maintenance": "Maintenance",
+    "offline": "Offline",
+    "selectedSubscribed": "Selected / Subscribed",
+    "yourLocation": "Your Geolocation",
+    "yourPosition": "Your Position",
+    "wqiNotCalculated": "WQI index is not currently calculated",
+    "wqiIndex": "WQI Water Quality Index",
+    "exploreTitle": "Explore Stations",
+    "exploreSubtitle": "Find stations nearby and subscribe to their metrics",
+    "searchPlaceholder": "Search for a station...",
+    "map": "Map",
+    "list": "List",
+    "metersAway": "m away",
+    "kmAway": "km away",
+    "unsubscribe": "Unsubscribe from alerts",
+    "subscribe": "Subscribe to alerts",
+    "detailedReport": "Detailed Report",
+    "yourSubscriptions": "Your Subscriptions",
+    "currentTelemetry": "Current telemetry metrics:",
+    "stationDetails": "Station Details",
+    "noStationsFound": "No stations found",
+    "tryChangingQuery": "Try changing your search query",
+    "unsubSuccess": "You have unsubscribed from station alerts.",
+    "subSuccess": "You have successfully subscribed to alerts!",
+    "subError": "An error occurred while changing subscription."
+  }
+}

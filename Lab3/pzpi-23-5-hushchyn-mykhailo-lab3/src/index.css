@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Тут ми пізніше можемо додати кастомні CSS змінні для теми (Theme variables) */
+@theme {
+  --color-status-active: #10b981;
+  --color-status-offline: #64748b;
+  --color-status-maintenance: #f59e0b;
+}
